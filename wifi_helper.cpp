@@ -1,7 +1,5 @@
 #include "wifi_helper.h"
 
-Preferences preferences;
-
 int serial_select_ssid(unsigned char *buffer, uint8_t buffer_length)
 {
     if (WiFi.isConnected())
@@ -66,6 +64,7 @@ int serial_select_ssid(unsigned char *buffer, uint8_t buffer_length)
 
 bool is_wifi_setup(void)
 {
+    Preferences preferences;
     bool initialized = false;
     preferences.begin(SENSOR_PREFERENCES, true);
     initialized = preferences.isKey(WIFI_SSID) && preferences.isKey(WIFI_PASSWORD);
@@ -75,6 +74,8 @@ bool is_wifi_setup(void)
 
 void wifi_connect(void)
 {
+    Preferences preferences;
+
     if (!is_wifi_setup())
     {
         Serial.println("WiFi not configured.");
@@ -115,6 +116,8 @@ void wifi_connect(void)
 
 void serial_reset_wifi_data(void)
 {
+    Preferences preferences;
+
     Serial.println("Press r to reset the WiFi data.");
     for (int i = 0; i < 10; i++)
     {

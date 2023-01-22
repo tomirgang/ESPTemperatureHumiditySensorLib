@@ -8,5 +8,7 @@
 #define WIFI_SSID "wifi_ssid"
 #define WIFI_PASSWORD "wifi_password"
 
+#define GMT_OFFSET_SEC 7200
+#define GMT_DAYLIGHT_SEC 3600
 
 #endif
