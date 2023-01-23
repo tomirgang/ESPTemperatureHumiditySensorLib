@@ -24,6 +24,10 @@ int read_serial(unsigned char *buffer, uint8_t buffer_length, const char *name)
         }
         else if (c == '\n' || c == '\r')
         {
+            if(p == 0) {
+                continue;
+            }
+
             Serial.print('\n');
             buffer[p] = '\0';
             break;
@@ -47,8 +51,45 @@ void wait_for_serial_connect(void)
         Serial.print(".");
         delay(1000);
     }
+    Serial.println();
 }
 
-void print_data_to_serial(void) {
-    //TODO: implement
+void print_data_to_serial(bool short_format)
+{
+    Serial.println("\n\n=====");
+    print_sensor_info_to_serial();
+    print_latest_data_to_serial();
+
+    if (!short_format)
+    {
+        print_last_data_to_serial();
+        print_day_data_to_serial();
+    }
+    Serial.println("\n=====\n");
+}
+
+void print_sensor_info_to_serial(void)
+{
+    Preferences preferences;
+    preferences.begin(SENSOR_PREFERENCES, true);
+    String ssid = preferences.getString(WIFI_SSID);
+    String name = preferences.getString(SENSOR_NAME);
+    preferences.end();
+
+    Serial.printf("Sensor %s:\n", name);
+
+    time_t now;
+    time(&now);
+    char buffer[21];
+    format_timestamp(now, buffer);
+    Serial.printf("Systemzeit: %s\n", buffer);
+
+    if (WiFi.isConnected())
+    {
+        Serial.printf("Connected to WiFi %s with IP %s\n", ssid.c_str(), WiFi.localIP().toString().c_str());
+    }
+    else
+    {
+        Serial.println("Not connected to WiFi.");
+    }
 }
