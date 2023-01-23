@@ -76,4 +76,29 @@ void format_timestamp(time_t timestamp, char *buffer);
  */
 bool is_day(void);
 
+/**
+ * @brief Latest data as JSON.
+ * 
+ * @param buffer buffer for JSON string
+ * @param len length of buffer (~200)
+ */
+size_t json_latest(char * buffer, size_t len);
+
+
+/**
+ * @brief Last data as JSON.
+ * 
+ * @param buffer buffer for JSON string
+ * @param len length of buffer (~200)
+ */
+size_t json_last(char * buffer, size_t len);
+
+/**
+ * @brief Last data as JSON.
+ * 
+ * @param buffer buffer for JSON string
+ * @param len length of buffer (~200)
+ */
+size_t json_day(char * buffer, size_t len);
+
 #endif

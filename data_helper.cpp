@@ -158,7 +158,6 @@ bool add_values(float humidity, float temperature)
 
     last_ptr = (last_ptr + 1) % LEN_LAST;
 
-
     time_t now;
     time(&now);
     if (now > (last_day_update + DAY_SLEEP_TIME))
@@ -166,7 +165,7 @@ bool add_values(float humidity, float temperature)
         time(&last_day_update);
 
         Serial.println("Record new day value.");
-        
+
         day[day_ptr].ts = latest.ts;
         day[day_ptr].humidity = latest.humidity;
         day[day_ptr].temperature = latest.temperature;
@@ -263,14 +262,17 @@ void load_data(void)
             print_last_data_to_serial();
 
             Serial.printf("last ptr: %d\n", last_ptr);
-            
-            if(last_ptr > 0) {
+
+            if (last_ptr > 0)
+            {
                 char buffer[21];
                 format_timestamp(last[last_ptr].ts, buffer);
                 char buffer2[21];
                 format_timestamp(last[last_ptr - 1].ts, buffer2);
                 Serial.printf("last ptr: %s, last ptr - 1: %s\n", buffer, buffer2);
-            } else {
+            }
+            else
+            {
                 char buffer[21];
                 format_timestamp(last[last_ptr].ts, buffer);
                 Serial.printf("time of last ptr: %s\n", buffer);
@@ -307,16 +309,19 @@ void load_data(void)
             day_ptr = (day_ptr + 1) % LEN_DAY;
 
             print_day_data_to_serial();
-            
+
             Serial.printf("day ptr: %d\n", day_ptr);
 
-            if(day_ptr > 0) {
+            if (day_ptr > 0)
+            {
                 char buffer[21];
                 format_timestamp(day[day_ptr].ts, buffer);
                 char buffer2[21];
                 format_timestamp(day[day_ptr - 1].ts, buffer2);
                 Serial.printf("day ptr: %s, day ptr - 1: %s\n", buffer, buffer2);
-            } else {
+            }
+            else
+            {
                 char buffer[21];
                 format_timestamp(day[day_ptr].ts, buffer);
                 Serial.printf("time of day ptr: %s\n", buffer);
@@ -386,9 +391,84 @@ bool is_day(void)
 {
     time_t now;
     time(&now);
-    if(day_ptr == 0) {
+    if (day_ptr == 0)
+    {
         return now > (day[LEN_DAY - 1].ts + DAY_SLEEP_TIME);
-    } else {
+    }
+    else
+    {
         return now > (day[day_ptr - 1].ts + DAY_SLEEP_TIME);
     }
+}
+
+size_t json_latest(char *buffer, size_t len)
+{
+    Preferences preferences;
+    preferences.begin(SENSOR_PREFERENCES, true);
+
+    char buf[21];
+    format_timestamp(latest.ts, buf);
+
+    size_t p = snprintf(buffer, len, "{\"Sensor\":\"%s\",\"Time\":\"%s\",\"TS\":\"%ld\",\"Temperature\":\"%.2f °C\",\"Humidity\":\"%.2f %%\"}",
+                        preferences.getString(SENSOR_NAME).c_str(), buf, latest.ts, latest.temperature, latest.humidity);
+
+    preferences.end();
+
+    return p;
+}
+
+size_t json_last(char *buffer, size_t len)
+{
+    Preferences preferences;
+    preferences.begin(SENSOR_PREFERENCES, true);
+
+    char buf[21];
+    format_timestamp(latest.ts, buf);
+
+    size_t p = snprintf(buffer, len, "{\"Sensor\":\"%s\",\"Time\":\"%s\",\"TS\":\"%ld\",\"Temperature\":\"%.2f °C\",\"Humidity\":\"%.2f %%\",\"last\":[",
+                        preferences.getString(SENSOR_NAME).c_str(), buf, latest.ts, latest.temperature, latest.humidity);
+    preferences.end();
+
+    for (int i = 0; i < LEN_LAST; i++)
+    {
+        int idx = (last_ptr + i) % LEN_LAST;
+        if (last[idx].ts > 0)
+        {
+            format_timestamp(last[idx].ts, buf);
+            p = p + snprintf(&buffer[p], len - p, "{\"Time\":\"%s\",\"TS\":\"%ld\",\"Temperature\":\"%.2f °C\",\"Humidity\":\"%.2f %%\"},",
+                             buf, last[idx].ts, last[idx].temperature, last[idx].humidity);
+        }
+    }
+    p--; // remove last ,
+    p = p + snprintf(&buffer[p], len - p, "]}");
+
+    return p;
+}
+
+size_t json_day(char *buffer, size_t len)
+{
+    Preferences preferences;
+    preferences.begin(SENSOR_PREFERENCES, true);
+
+    char buf[21];
+    format_timestamp(latest.ts, buf);
+
+    size_t p = snprintf(buffer, len, "{\"Sensor\":\"%s\",\"Time\":\"%s\",\"TS\":\"%ld\",\"Temperature\":\"%.2f °C\",\"Humidity\":\"%.2f %%\",\"day\":[",
+                        preferences.getString(SENSOR_NAME).c_str(), buf, latest.ts, latest.temperature, latest.humidity);
+    preferences.end();
+
+    for (int i = 0; i < LEN_DAY; i++)
+    {
+        int idx = (day_ptr + i) % LEN_DAY;
+        if (day[idx].ts > 0)
+        {
+            format_timestamp(day[idx].ts, buf);
+            p = p + snprintf(&buffer[p], len - p, "{\"Time\":\"%s\",\"TS\":\"%ld\",\"Temperature\":\"%.2f °C\",\"Humidity\":\"%.2f %%\"},",
+                             buf, day[idx].ts, day[idx].temperature, day[idx].humidity);
+        }
+    }
+    p--; // remove last ,
+    p = p + snprintf(&buffer[p], len - p, "]}");
+
+    return p;
 }
